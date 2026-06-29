@@ -38,7 +38,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "@react-native-vector-icons/material-icons"
     ],
     "experiments": {
       "typedRoutes": true,
