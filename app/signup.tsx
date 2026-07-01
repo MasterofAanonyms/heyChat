@@ -1,3 +1,5 @@
+import Feather from "@expo/vector-icons/Feather";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Image,
@@ -11,13 +13,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { useHeaderHeight } from "@react-navigation/elements";
-import Feather from "@expo/vector-icons/Feather";
 
 export default function SignUp() {
   const router = useRouter();
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -52,11 +52,11 @@ export default function SignUp() {
           <View style={styles.headerContainer}>
             <Text style={styles.headerTitle}>Create Account</Text>
             <Text style={styles.headerSubtitle}>
-              Sign up to get started with heyChat! 🚀
+              Sign up to get started with heyChat! 
             </Text>
           </View>
 
-          {/* Name Input */}
+          {/* Name Inputs */}
           <View style={styles.inputWrapper}>
             <Feather
               name="user"
@@ -66,10 +66,28 @@ export default function SignUp() {
             />
             <TextInput
               style={styles.textInput}
-              placeholder="Full Name"
+              placeholder="First Name"
               placeholderTextColor="#94A3B8"
-              value={name}
-              onChangeText={setName}
+              autoCapitalize="words"
+              value={firstName}
+              onChangeText={setFirstName}
+            />
+          </View>
+
+          <View style={styles.inputWrapper}>
+            <Feather
+              name="user"
+              size={20}
+              color="#94A3B8"
+              style={styles.inputIcon}
+            />
+            <TextInput
+              style={styles.textInput}
+              placeholder="Last Name"
+              placeholderTextColor="#94A3B8"
+              autoCapitalize="words"
+              value={lastName}
+              onChangeText={setLastName}
             />
           </View>
 

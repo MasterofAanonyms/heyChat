@@ -1,17 +1,18 @@
 import Feather from "@expo/vector-icons/Feather";
-import { useHeaderHeight } from "@react-navigation/elements";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -23,26 +24,21 @@ export default function Signin() {
 
   const [secureTextEntry, setSecureTextEntry] = useState(true);
 
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
+    async function checkUser() {
+      const user = await AsyncStorage.getItem("user");
 
-        async function checkUser() {
+      if (user) {
+        router.replace("/(tabs)/home");
+      } else {
+        setIsLoading(false);
+      }
+    }
 
-            const user = await AsyncStorage.getItem("user");
-
-            if (user) {
-                router.replace("/(tabs)/home");
-            } else {
-
-                setIsLoading(false);
-
-            }
-
-
-        }
-
-        checkUser();
-
-    }, []);
+    checkUser();
+  }, []);
 
   let headerHeight = 0;
 
@@ -53,6 +49,9 @@ export default function Signin() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar 
+              barStyle="dark-content"  // Set text/icon color to white
+            />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -118,10 +117,16 @@ export default function Signin() {
           </View>
 
           <Pressable
+
+onPress={() => {
+                router.push("/(tabs)/home");
+              }}
+
             style={({ pressed }) => [
               styles.signInButton,
               pressed && styles.signInButtonPressed,
             ]}
+
           >
             <Text style={styles.signInButtonText}>Sign In</Text>
           </Pressable>
