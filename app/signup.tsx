@@ -2,6 +2,7 @@ import Feather from "@expo/vector-icons/Feather";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -24,6 +25,7 @@ export default function SignUp() {
 
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [secureConfirmTextEntry, setSecureConfirmTextEntry] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   let headerHeight = 0;
 
@@ -31,6 +33,54 @@ export default function SignUp() {
     ios: headerHeight + 30,
     android: 0,
   });
+
+  async function signupRequest() {
+    if (
+      firstName === "" ||
+      lastName === "" ||
+      phone === "" ||
+      password === "" ||
+      confirmPassword === ""
+    ) {
+      Alert.alert("Missing details", "Please enter your details.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert("Authentication error", "Password did not match!");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_API_URL}/auth/regProcess.php`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ firstName, lastName, phone, password }),
+        },
+      );
+
+      const text = await response.text();
+      console.log("RAW RESPONSE:", text);
+
+      const data = JSON.parse(text);
+
+      if (data.status === "success") {
+        Alert.alert("Success", "Account created successfully! Please Sign in.");
+        router.back(); // goes back to Sign In screen
+      } else {
+        Alert.alert("Error", data.message);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Something went wrong. Please try again.");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -45,14 +95,14 @@ export default function SignUp() {
           keyboardShouldPersistTaps="handled"
         >
           <Image
-            source={require("../assets/images/login.png")}
+            source={require("../assets/images/login2.png")}
             style={styles.img}
           />
 
           <View style={styles.headerContainer}>
             <Text style={styles.headerTitle}>Create Account</Text>
             <Text style={styles.headerSubtitle}>
-              Sign up to get started with heyChat! 
+              Sign up to get started with heyChat!
             </Text>
           </View>
 
@@ -171,8 +221,12 @@ export default function SignUp() {
               styles.signUpButton,
               pressed && styles.signUpButtonPressed,
             ]}
+            onPress={signupRequest}
+            disabled={loading}
           >
-            <Text style={styles.signUpButtonText}>Sign Up</Text>
+            <Text style={styles.signUpButtonText}>
+              {loading ? "Creating Account..." : "Sign Up"}
+            </Text>
           </Pressable>
 
           {/* Footer Navigation */}
@@ -189,30 +243,15 @@ export default function SignUp() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  keyboardView: {
-    flex: 1,
-    width: "100%",
-  },
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
+  keyboardView: { flex: 1, width: "100%" },
   scrollContainer: {
     alignItems: "center",
     paddingHorizontal: 24,
     paddingBottom: 40,
   },
-  img: {
-    width: 200,
-    height: 200,
-    resizeMode: "contain",
-    marginTop: 5,
-  },
-  headerContainer: {
-    alignItems: "center",
-    width: "90%",
-    marginBottom: 20,
-  },
+  img: { width: 200, height: 200, resizeMode: "contain", marginTop: 5 },
+  headerContainer: { alignItems: "center", width: "90%", marginBottom: 20 },
   headerTitle: {
     fontSize: 28,
     fontWeight: "800",
@@ -238,9 +277,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  inputIcon: {
-    marginRight: 12,
-  },
+  inputIcon: { marginRight: 12 },
   textInput: {
     flex: 1,
     height: "100%",
@@ -248,9 +285,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "500",
   },
-  eyeIcon: {
-    padding: 4,
-  },
+  eyeIcon: { padding: 4 },
   signUpButton: {
     backgroundColor: "#4F46E5",
     borderRadius: 16,
@@ -266,15 +301,8 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  signUpButtonPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.98 }],
-  },
-  signUpButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-  },
+  signUpButtonPressed: { opacity: 0.9, transform: [{ scale: 0.98 }] },
+  signUpButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
   footerContainer: {
     flexDirection: "row",
     justifyContent: "center",
@@ -282,13 +310,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 20,
   },
-  footerText: {
-    color: "#64748B",
-    fontSize: 14,
-  },
-  signInText: {
-    color: "#4F46E5",
-    fontSize: 14,
-    fontWeight: "700",
-  },
+  footerText: { color: "#64748B", fontSize: 14 },
+  signInText: { color: "#4F46E5", fontSize: 14, fontWeight: "700" },
 });

@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -21,37 +22,72 @@ export default function Signin() {
 
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-
   const [secureTextEntry, setSecureTextEntry] = useState(true);
-
   const [isLoading, setIsLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     async function checkUser() {
       const user = await AsyncStorage.getItem("user");
-
       if (user) {
         router.replace("/(tabs)/home");
       } else {
         setIsLoading(false);
       }
     }
-
     checkUser();
   }, []);
 
   let headerHeight = 0;
-
   const keyboardOffset = Platform.select({
     ios: headerHeight + 30,
     android: 0,
   });
 
+  async function signinRequest() {
+    if (phone === "" || password === "") {
+      Alert.alert("Missing details", "Please enter the credintials.");
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_API_URL}/auth/logProcess.php`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, password }),
+        },
+      );
+
+      const text = await response.text();
+      console.log("RAW RESPONSE:", text);
+
+      const data = JSON.parse(text);
+
+      if (data.status === "success") {
+        await AsyncStorage.setItem("user", JSON.stringify(data.user));
+        router.replace("/(tabs)/home");
+      } else {
+        Alert.alert("Login failed", data.message);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Something went wrong. Please try again.");
+      console.error(error);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (isLoading) {
+    return null;
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar 
-              barStyle="dark-content"  // Set text/icon color to white
-            />
+      <StatusBar barStyle="dark-content" />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -63,7 +99,7 @@ export default function Signin() {
           keyboardShouldPersistTaps="handled"
         >
           <Image
-            source={require("../assets/images/login.png")}
+            source={require("../assets/images/login2.png")}
             style={styles.img}
           />
 
@@ -117,27 +153,21 @@ export default function Signin() {
           </View>
 
           <Pressable
-
-onPress={() => {
-                router.push("/(tabs)/home");
-              }}
-
+            onPress={signinRequest}
+            disabled={submitting}
             style={({ pressed }) => [
               styles.signInButton,
               pressed && styles.signInButtonPressed,
             ]}
-
           >
-            <Text style={styles.signInButtonText}>Sign In</Text>
+            <Text style={styles.signInButtonText}>
+              {submitting ? "Signing In..." : "Sign In"}
+            </Text>
           </Pressable>
 
           <View style={styles.footerContainer}>
             <Text style={styles.footerText}>Do not have an account? </Text>
-            <Pressable
-              onPress={() => {
-                router.push("/signup");
-              }}
-            >
+            <Pressable onPress={() => router.push("/signup")}>
               <Text style={styles.signUpText}>Sign Up</Text>
             </Pressable>
           </View>
@@ -148,30 +178,15 @@ onPress={() => {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  keyboardView: {
-    flex: 1,
-    width: "100%",
-  },
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
+  keyboardView: { flex: 1, width: "100%" },
   scrollContainer: {
     alignItems: "center",
     paddingHorizontal: 24,
     paddingBottom: 40,
   },
-  img: {
-    width: 200,
-    height: 200,
-    resizeMode: "contain",
-    marginTop: 5,
-  },
-  headerContainer: {
-    alignItems: "center",
-    width: "90%",
-    marginBottom: 20,
-  },
+  img: { width: 200, height: 200, resizeMode: "contain", marginTop: 5 },
+  headerContainer: { alignItems: "center", width: "90%", marginBottom: 20 },
   headerTitle: {
     fontSize: 28,
     fontWeight: "800",
@@ -197,9 +212,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  inputIcon: {
-    marginRight: 12,
-  },
+  inputIcon: { marginRight: 12 },
   textInput: {
     flex: 1,
     height: "100%",
@@ -207,19 +220,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "500",
   },
-  eyeIcon: {
-    padding: 4,
-  },
+  eyeIcon: { padding: 4 },
   forgotPasswordContainer: {
     width: "100%",
     alignItems: "flex-end",
     marginBottom: 24,
   },
-  forgotPasswordText: {
-    color: "#4F46E5",
-    fontSize: 14,
-    fontWeight: "600",
-  },
+  forgotPasswordText: { color: "#4F46E5", fontSize: 14, fontWeight: "600" },
   signInButton: {
     backgroundColor: "#4F46E5",
     borderRadius: 16,
@@ -234,16 +241,8 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  signInButtonPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.98 }],
-  },
-  signInButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-
+  signInButtonPressed: { opacity: 0.9, transform: [{ scale: 0.98 }] },
+  signInButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
   footerContainer: {
     flexDirection: "row",
     justifyContent: "center",
@@ -251,13 +250,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 20,
   },
-  footerText: {
-    color: "#64748B",
-    fontSize: 14,
-  },
-  signUpText: {
-    color: "#4F46E5",
-    fontSize: 14,
-    fontWeight: "700",
-  },
+  footerText: { color: "#64748B", fontSize: 14 },
+  signUpText: { color: "#4F46E5", fontSize: 14, fontWeight: "700" },
 });
